@@ -1,0 +1,62 @@
+<?php
+namespace App\Traits;
+
+trait HasMetaAttributes
+{
+    protected static $globalWithMeta = false;
+    protected $instanceWithMeta = null;
+
+    public static function toggleMeta(bool $withMeta = true)
+    {
+        static::$globalWithMeta = $withMeta;
+    }
+
+    public static function disableMetaFields(bool $withMeta = true)
+    {
+        static::$globalWithMeta = $withMeta;
+    }
+
+
+
+    public function withMeta(bool $withMeta = true)
+    {
+        $this->instanceWithMeta = $withMeta;
+        return $this;
+    }
+
+    public function getAttribute($key)
+    {
+        $value = parent::getAttribute($key);
+
+        $withMeta = $this->instanceWithMeta !== null ? $this->instanceWithMeta : static::$globalWithMeta;
+
+        if ($withMeta && isset($this->meta[$key])) {
+            return [
+                'value' => $value,
+                'meta'  => $this->meta[$key],
+            ];
+        }
+
+        return $value;
+    }
+
+    public function toArray()
+    {
+        $attributes = parent::toArray();
+
+        $withMeta = $this->instanceWithMeta !== null ? $this->instanceWithMeta : static::$globalWithMeta;
+
+        if ($withMeta) {
+            foreach ($this->meta as $key => $metaData) {
+                if (array_key_exists($key, $attributes)) {
+                    $attributes[$key] = [
+                        'value' => $attributes[$key],
+                        'meta'  => $metaData,
+                    ];
+                }
+            }
+        }
+
+        return $attributes;
+    }
+}
