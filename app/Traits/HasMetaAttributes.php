@@ -34,6 +34,7 @@ trait HasMetaAttributes
             $meta = $this->meta[$key];
             $computedValues = $this->computeMetaValue($key, $value, $meta);
             $meta['computedValues'] = $computedValues;
+            // @todo: should we keep the compute information
 
             return [
                 'value' => $value,
@@ -54,9 +55,8 @@ trait HasMetaAttributes
                 if (array_key_exists($key, $attributes)) {
                     $computedValues = $this->computeMetaValue($key, $attributes[$key], $metaData);
                     $metaData['computedValues'] = $computedValues;
-                    $attributes[$key] = [
-                        'value' => $attributes[$key],
-                        'meta' => $metaData,
+                    $attributes['meta'][] = [
+                        $key =>$metaData,
                     ];
                 }
             }
@@ -67,8 +67,6 @@ trait HasMetaAttributes
 
     private function computeMetaValue($key, $value, $meta)
     {
-        \Log::info("Computing meta value for key: $key"); // Debug line
-
         $computedValues = [];
 
         if (isset($meta['compute'])) {
@@ -99,7 +97,8 @@ trait HasMetaAttributes
 
                     $totalComputedValue = $value;  // Start with the original value
                     foreach ($relatedModels as $relatedModel) {
-                        $targetValue = $relatedModel->{$computeData['targetField']};
+                        var_dump("compute data field" . $computeData['targetField']);
+                        $targetValue = collect($relatedModel->attributes)->get('meta.computedValues') ?? $relatedModel->{$computeData['targetField']};
                         $totalComputedValue = $strategy->compute($totalComputedValue, $targetValue);
                     }
 
